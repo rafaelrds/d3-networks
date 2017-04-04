@@ -54,6 +54,9 @@
 
 		<div class="section">
 			<h3>Referências</h3>
+			<ul class="list-unstyled">
+				<li><a href="https://github.com/d3/d3-geo/blob/master/README.md#azimuthal-projections" target="_blank">Projeções azimutais <span class="icon-link-external"></span></a></li>
+			</ul>
 		</div>
 	</div>
 
@@ -79,54 +82,39 @@
 		    .force("charge", d3.forceManyBody())
 		    .force("center", d3.forceCenter(width / 2, height / 2));
 
-		//d3.json("http://analytics.lsd.ufcg.edu.br/pre/ciencia_da_computacao_d_cg/disciplinas", function(error, apiresponse) {
-		//d3.json("http://analytics.lsd.ufcg.edu.br/pre/design_d_cg/disciplinas", function(error, apiresponse) {
-		d3.json("http://analytics.lsd.ufcg.edu.br/pre/engenharia_eletrica_cg/disciplinas", function(error, apiresponse) {
+		d3.json("miserables.json", function(error, graph) {
 		  if (error) throw error;
 
-			var links = [];
-			apiresponse.forEach(function(d){
-				d.pre_requisitos.forEach(function(p){
-					links.push({source: String(d.codigo_disciplina), target: String(p)});
-				});
-			})
-
-			var nodes = apiresponse.map(function(d){
-				return {id: String(d.codigo_disciplina),
-								codigo_departamento : d.codigo_departamento,
-								nome : d.disciplina};
-			});
-
-			console.dir(links);
-			console.dir(nodes);
+			console.dir(graph.links);
+			console.dir(graph.nodes);
 
 		  var link = svg.append("g")
 		      .attr("class", "link")
 		    .selectAll("line")
-		    	.data(links)
+		    	.data(graph.links)
 		    .enter().append("line");
 
 		  var node = svg.append("g")
 		      .attr("class", "nodes")
 		    .selectAll("circle")
-		    	.data(nodes)
+		    	.data(graph.nodes)
 		    .enter().append("circle")
 		      .attr("r", 5)
-		      .attr("fill", function(d) { return color(d.codigo_departamento); })
+		      .attr("fill", function(d) { return color(d.group); })
 		      .call(d3.drag()
 		          .on("start", dragstarted)
 		          .on("drag", dragged)
 		          .on("end", dragended));
 
 		  node.append("title")
-		      .text(function(d) { return d.nome; });
+		      .text(function(d) { return d.id; });
 
 		  simulation
-		      .nodes(nodes)
+		      .nodes(graph.nodes)
 		      .on("tick", ticked);
 
 		  simulation.force("link")
-		      .links(links);
+		      .links(graph.links);
 
 		  function ticked() {
 		    link
