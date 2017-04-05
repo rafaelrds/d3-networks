@@ -20,6 +20,7 @@
 			}
 
 			.link {
+
 					stroke: #999;
 					stroke-opacity: 0.6;
 			}
@@ -30,104 +31,194 @@
 	<div class="container">
 
 		<header>
-			<h1>Comparação entre as grades dos cursos</h1>
+			<h1>Comparando esqueletos de cursos UFCG</h1>
 		</header>
 
-		<div id="chart"></div>
+		<!--<div id="chart"></div>-->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="input-group center">
+                    <div class="">
+                        <button id="dropdown1" class="btn" >
+                            Física Licensiatura
+                            <span class="caret"></span>
+                        </button>
+                        <ul id="options1" class=" ">
 
-		<div class="section">
-			<h3>Referências</h3>
-			<ul class="list-unstyled">
-				<li><a href="https://github.com/d3/d3-geo/blob/master/README.md#azimuthal-projections" target="_blank">Projeções azimutais <span class="icon-link-external"></span></a></li>
-			</ul>
-		</div>
-	</div>
+                        </ul>
+                    </div>
+                </div>
+                <div id="chart1" "></div>
+            </div>
+            <div class="col-md-6">
+                <div class="input-group center">
+                    <div class="">
+                        <button id="dropdown2" class="btn" >
+                            Música Bacharelado
+                            <span class="caret"></span>
+                        </button>
+                        <ul id="options2" class=" ">
+
+                        </ul>
+                    </div>
+                </div>
+                <div id="chart2">
+            </div>
+    </div>
+
+    </div>
+
+
+
+
+
+
 
 	<footer></footer>
 
 	<!-- scripts -->
 	<script src="js/d3.v4.min.js"></script>
-	<script>
-		var
-		    width = 1000,
-		    height = 500;
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 
-		var svg = d3.select("#chart")
-				.append("svg")
-				.attr('version', '1.1')
-				.attr('viewBox', '0 0 '+width+' '+height)
-				.attr('width', '100%');
+        <script>
+         function draw(curso, chart) {
+            d3.select("#" + chart).selectAll("*").remove();
 
-		var color = d3.scaleOrdinal(d3.schemeCategory20);
+            var width = 600,
+                height = 500;
 
-		var simulation = d3.forceSimulation()
-		    .force("link", d3.forceLink().id(function(d) { return d.id; }))
-		    .force("charge", d3.forceManyBody())
-		    .force("center", d3.forceCenter(width / 2, height / 2));
+            var svg = d3.select("#" + chart)
+                .append("svg")
+                .attr('version', '1.1')
+                .attr('viewBox', '0 0 '+width+' '+height)
+                .attr('width', '100%');
 
-		d3.json("miserables.json", function(error, graph) {
-		  if (error) throw error;
+            var color = d3.scaleOrdinal(d3.schemeCategory20);
 
-			console.dir(graph.links);
-			console.dir(graph.nodes);
+            var simulation = d3.forceSimulation()
+                .force("link", d3.forceLink().id(function(d) { return d.id; }))
+                .force("charge", d3.forceManyBody().strength(-20))
+                .force("center", d3.forceCenter(width / 2, height / 2));
 
-		  var link = svg.append("g")
-		      .attr("class", "link")
-		    .selectAll("line")
-		    	.data(graph.links)
-		    .enter().append("line");
+            d3.json("dados_disciplinas/" + curso + ".json", function (error, apiresponse) {
+                if (error) throw error;
 
-		  var node = svg.append("g")
-		      .attr("class", "nodes")
-		    .selectAll("circle")
-		    	.data(graph.nodes)
-		    .enter().append("circle")
-		      .attr("r", 5)
-		      .attr("fill", function(d) { return color(d.group); })
-		      .call(d3.drag()
-		          .on("start", dragstarted)
-		          .on("drag", dragged)
-		          .on("end", dragended));
+                var links = [],
+                    nodesComPreRequisito = new Set();
 
-		  node.append("title")
-		      .text(function(d) { return d.id; });
 
-		  simulation
-		      .nodes(graph.nodes)
-		      .on("tick", ticked);
+                apiresponse.forEach(function (d) {
+                    d.pre_requisitos.forEach(function (p) {
+                        links.push({source: String(d.codigo_disciplina), target: String(p)});
+                        nodesComPreRequisito.add(String(d.codigo_disciplina));
+                    });
+                });
 
-		  simulation.force("link")
-		      .links(graph.links);
+                var nodes = apiresponse.map(function (d) {
+                    return {
+                        id: String(d.codigo_disciplina),
+                        codigo_departamento: d.codigo_departamento,
+                        nome: d.disciplina
+                    };
+                });
 
-		  function ticked() {
-		    link
-		        .attr("x1", function(d) { return d.source.x; })
-		        .attr("y1", function(d) { return d.source.y; })
-		        .attr("x2", function(d) { return d.target.x; })
-		        .attr("y2", function(d) { return d.target.y; });
+                nodes.forEach(function (d) {
+                    if (!(nodesComPreRequisito.has(d.id))) {
+                        links.push({source: d.id, target: "inicio_curso"});
+                    }
+                });
 
-		    node
-		        .attr("cx", function(d) { return d.x; })
-		        .attr("cy", function(d) { return d.y; });
-		  }
-		});
+                nodes.push({
+                    id: "inicio_curso",
+                    codigo_departamento: -1,
+                    nome: "Início do curso"
+                });
 
-		function dragstarted(d) {
-		  if (!d3.event.active) simulation.alphaTarget(0.3).restart();
-		  d.fx = d.x;
-		  d.fy = d.y;
-		}
+                console.dir(links);
+                console.dir(nodes);
 
-		function dragged(d) {
-		  d.fx = d3.event.x;
-		  d.fy = d3.event.y;
-		}
+                var link = svg.append("g")
+                    .attr("class", "link")
+                    .selectAll("line")
+                    .data(links)
+                    .enter().append("line")
+                    .attr('stroke', "black");
 
-		function dragended(d) {
-		  if (!d3.event.active) simulation.alphaTarget(0);
-		  d.fx = null;
-		  d.fy = null;
-		}
+                var node = svg.append("g")
+                    .attr("class", "nodes")
+                    .selectAll("circle")
+                    .data(nodes)
+                    .enter().append("circle")
+                    .attr("r", function(d){
+                        if (d.id == "inicio_curso") {
+                            return 15;
+                        }
+                        return 5;
+                    })
+                    .attr("fill", function (d) {
+                        return color(d.codigo_departamento);
+                    })
+                    .call(d3.drag()
+                        .on("start", dragstarted)
+                        .on("drag", dragged)
+                        .on("end", dragended));
+
+                node.append("title")
+                    .text(function (d) {
+                        return d.nome;
+                    });
+
+                simulation
+                    .nodes(nodes)
+                    .on("tick", ticked);
+
+                simulation.force("link")
+                    .links(links);
+
+                function ticked() {
+                    link
+                        .attr("x1", function (d) {
+                            return d.source.x;
+                        })
+                        .attr("y1", function (d) {
+                            return d.source.y;
+                        })
+                        .attr("x2", function (d) {
+                            return d.target.x;
+                        })
+                        .attr("y2", function (d) {
+                            return d.target.y;
+                        });
+                    node
+                        .attr("cx", function (d) {
+                            return d.x;
+                        })
+                        .attr("cy", function (d) {
+                            return d.y;
+                        });
+                }
+            });
+
+            function dragstarted(d) {
+                if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+
+            function dragged(d) {
+                d.fx = d3.event.x;
+                d.fy = d3.event.y;
+            }
+
+            function dragended(d) {
+                if (!d3.event.active) simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+        }
+
+        draw("fisica_lic_d_cg", "chart1");
+        draw("musica_bac_d_cg", "chart2");
 
 </script>
 
