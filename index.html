@@ -24,6 +24,9 @@
 					stroke: #999;
 					stroke-opacity: 0.6;
 			}
+            h6 {
+                font-size:4px;
+            }
     </style>
 </head>
 <body>
@@ -31,40 +34,66 @@
 	<div class="container">
 
 		<header>
-			<h1>Comparando esqueletos de cursos UFCG</h1>
+			<h1>Física ou Música?</h1>
 		</header>
+
+        <h3>Comemoramos em maio de 2017 os 138 anos desde o nascimento de Albert Einstein.
+            Além de um grande físico, Einstein apreciava e tocava boa música, aprendendo piano e violino quando pequeno.
+        </h3>
+        <h3>
+            Certa vez afirmou "Se eu não fosse um físico, provavelmente seria um músico.
+            Frequentemente eu penso em música, vivo meus sonhos em música e vejo minha vida como uma música..."
+        </h3>
+
+        <h3>
+            Imagine que Einstein é um estudante da UFCG nos dias de hoje e sendo um amante tanto da Física como da
+            Música, pegou-se em dúvida de qual curso ingressar. Criamos uma visualização
+            para ajudar o jovem Einstein a descifrar a estrutura dos dois cursos.
+        </h3>
+        <h3>
+            Na nossa representação, as disciplinas são nós e a presença de um link indica um pre-requisito entre disciplinas.
+            O início do curso é marcado por um ponto &middot; onde também ligam-se as disciplinas sem pre-requisitos.
+            As disciplinas obrigatórias foram pintadas de <span style="color: #1F77B4">azul</span> e as complementares foram pintadas de
+            <span style="color: #FF7F0E">laranja</span>.
+        </h3>
+
 
 		<!--<div id="chart"></div>-->
         <div class="row">
             <div class="col-md-6">
                 <div class="input-group center">
-                    <div class="">
-                        <button id="dropdown1" class="btn" >
-                            Física Licenciatura
-                            <span class="caret"></span>
-                        </button>
-                        <ul id="options1" class=" ">
+                    <div >
+                        </br>
+                        <h2>Física Licenciatura</h2>
+                        <ul id="options1">
 
                         </ul>
                     </div>
                 </div>
-                <div id="chart1" "></div>
+                <div id="chart1"></div>
             </div>
+        </div>
+        </br>
+        <div class="row">
+
             <div class="col-md-6">
                 <div class="input-group center">
-                    <div class="">
-                        <button id="dropdown2" class="btn" >
-                            Música Bacharelado
-                            <span class="caret"></span>
-                        </button>
+                    <div>
+                        <h2>Música Bacharelado</h2>
                         <ul id="options2" class=" ">
 
                         </ul>
                     </div>
                 </div>
-                <div id="chart2">
+                <div id="chart2"></div>
             </div>
-    </div>
+        </div>
+
+        <h3>Embora o curso de Música pareça muito maior que o de Física, o que existem na verdade são "ramos"
+            que identificam as habilitações oferecidas pelo departamento, como Piano, Canto e Regência.
+        </h3>
+
+        <h6>Descobrimos que ambos cursos tem o mesmo número de complementares. :-)</h6>
 
     </div>
 
@@ -84,16 +113,17 @@
          function draw(curso, chart) {
             d3.select("#" + chart).selectAll("*").remove();
 
-            var width = 600,
-                height = 500;
+            var width = 1200,
+                height = 800;
 
             var svg = d3.select("#" + chart)
                 .append("svg")
+                .attr("style", "outline: thin;")
                 .attr('version', '1.1')
                 .attr('viewBox', '0 0 '+width+' '+height)
-                .attr('width', '100%');
+                .attr('width', width);
 
-            var color = d3.scaleOrdinal(d3.schemeCategory20);
+            var color = d3.scaleOrdinal(d3.schemeCategory10);
 
             var simulation = d3.forceSimulation()
                 .force("link", d3.forceLink().id(function(d) { return d.id; }))
@@ -117,7 +147,7 @@
                 var nodes = apiresponse.map(function (d) {
                     return {
                         id: String(d.codigo_disciplina),
-                        codigo_departamento: d.codigo_departamento,
+                        tipo: d.tipo,
                         nome: d.disciplina
                     };
                 });
@@ -156,7 +186,7 @@
                         return 5;
                     })
                     .attr("fill", function (d) {
-                        return color(d.codigo_departamento);
+                        return color(d.tipo);
                     })
                     .call(d3.drag()
                         .on("start", dragstarted)
